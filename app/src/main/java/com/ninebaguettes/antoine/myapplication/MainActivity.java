@@ -1,5 +1,10 @@
 package com.ninebaguettes.antoine.myapplication;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,9 +33,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Créer 10 users
-        // Créer une List des 10 users
-        // Créer une HashMap de cette List
+        Intent intent = getIntent();
+        if (intent.hasExtra(Intent.EXTRA_TEXT)) {
+            String message = intent.getStringExtra(Intent.EXTRA_TEXT);
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+        }
+
         List<HashMap<String, String>> userList = new ArrayList<>();
         User user;
         for (int i = 0; i < 10; i++) {
@@ -38,20 +46,16 @@ public class MainActivity extends AppCompatActivity {
             userList.add(user.toHashMap());
         }
 
+        Fragment fragment = new MyFirstFragment();
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.relative_fragment, fragment)
+                .addToBackStack(null)
+                .commit();
+
         setContentView(R.layout.activity_list);
 
         demoListView = (ListView) findViewById(R.id.listView);
         Button button = (Button) findViewById(R.id.button);
-
-//        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice);
-//        adapter.add("Jolan");
-//        adapter.add("Antoine");
-//        adapter.add("Alexandre");
-//        adapter.add("aime");
-//        adapter.add("déteste");
-//        adapter.add("les");;
-//        adapter.add("bites");
-//        adapter.add("poils");
 
         SimpleAdapter simpleAdapter = new SimpleAdapter(this,
                 userList,
@@ -59,35 +63,16 @@ public class MainActivity extends AppCompatActivity {
                 new String[]{NAME_KEY, NAME_EMAIL},
                 new int[]{android.R.id.text1, android.R.id.text2}
         );
-
-//        demoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                String val = (String) demoListView.getItemAtPosition(position);
-//                Toast toast = Toast.makeText(getApplicationContext(), val, Toast.LENGTH_SHORT);
-//                toast.show();
-//                adapter.remove(val);
-//                adapter.notifyDataSetChanged();
-//            }
-//        });
-
-        button.setText("Supprimer");
+        button.setText("Partager");
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SparseBooleanArray array = demoListView.getCheckedItemPositions();
-                String val = "";
-                for (int i = 0; i <= array.size(); i++) {
-                    if (array.get(i)) {
-                        val += " " + demoListView.getItemAtPosition(i);
-                    }
-                }
-                if (val.length() > 0) {
-                    Toast toast = Toast.makeText(getApplicationContext(), val, Toast.LENGTH_SHORT);
-                    toast.show();
-                }
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, "Text to share");
+                sendIntent.setType("text/plain");
+                startActivity(sendIntent);
             }
-
         });
         demoListView.setAdapter(simpleAdapter);
     }
