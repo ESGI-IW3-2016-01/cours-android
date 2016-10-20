@@ -1,0 +1,33 @@
+{
+    "response": {
+        "informations": {
+            "destination": {
+                "id_destination": "242",
+                "name": "Mairie du 18eme",
+                "slug": "mairie+du+18eme"
+            },
+            "line": "80",
+            "type": "bus",
+            "station": {
+                "id_station": "3893",
+                "name": "Mairie du 15 E",
+                "slug": "mairie+du+15+e"
+            }
+        },
+        "schedules": [
+            {
+                "destination": "Europe",
+                "message": "6 mn"
+            },
+            {
+                "destination": "Mairie du 18e-J. Joffrin",
+                "message": "17 mn"
+            }
+        ]
+    },
+    "_meta": {
+        "version": "2",
+        "date": "2016-10-20T10:50:29+02:00",
+        "call": "GET /bus/80/stations/mairie+du+15+e?destination=mairie+du+18eme"
+    }
+}

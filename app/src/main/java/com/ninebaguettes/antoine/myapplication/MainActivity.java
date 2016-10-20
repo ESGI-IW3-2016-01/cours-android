@@ -19,6 +19,14 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView demoListView;
     private static final String NAME_KEY = "name";
     private static final String NAME_EMAIL = "email";
+    private static final String MY_KEY = "cle";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,11 +55,9 @@ public class MainActivity extends AppCompatActivity {
             userList.add(user.toHashMap());
         }
 
-        Fragment fragment = new MyFirstFragment();
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.relative_fragment, fragment)
-                .addToBackStack(null)
-                .commit();
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(MY_KEY, "HELLO WORLD");
 
         setContentView(R.layout.activity_list);
 
@@ -63,7 +70,23 @@ public class MainActivity extends AppCompatActivity {
                 new String[]{NAME_KEY, NAME_EMAIL},
                 new int[]{android.R.id.text1, android.R.id.text2}
         );
-        button.setText("Partager");
+
+        try {
+            InputStream inputStream = getAssets().open("ratp.json");
+            String file = convertInputStreamToString(inputStream);
+            JSONObject jsonObject = new JSONObject(file);
+            String destination = jsonObject.optJSONObject("response").optJSONObject("informations").optJSONObject("destination").optString("name");
+            editor.putString("destination",destination);
+            editor.commit();
+            Log.d("OKAY",destination);
+        } catch (IOException e) {
+            Log.d("IOError", "Erreur à l'ouverture du fichier");
+        } catch (JSONException e) {
+            Log.d("JSONError", "Erreur au parsing du fichier");
+        }
+        Log.d("OKAY", "Fichier ouvert et parsé");
+
+        button.setText(sharedPreferences.getString("destination", "default"));
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -75,5 +98,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         demoListView.setAdapter(simpleAdapter);
+    }
+
+    private String convertInputStreamToString(InputStream inputStream) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
     }
 }
