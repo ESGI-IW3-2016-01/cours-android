@@ -4,13 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckedTextView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -51,12 +48,6 @@ public class MainActivity extends Activity {
             Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
         }
 
-//        User user;
-//        for (int i = 0; i < 10; i++) {
-//            user = new User("username-" + i, "lastname-" + i, "email-" + i);
-//            data.add(user.toHashMap());
-//        }
-
         SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(MY_KEY, "HELLO WORLD");
@@ -66,7 +57,6 @@ public class MainActivity extends Activity {
         demoListView = (ListView) findViewById(R.id.listView);
         Button button = (Button) findViewById(R.id.button);
 
-        //TODO Dummy Data
         simpleAdapter = new SimpleAdapter(this,
                 data,
                 android.R.layout.simple_expandable_list_item_2,
@@ -86,7 +76,8 @@ public class MainActivity extends Activity {
 //        sendIntent.setType("text/plain");
 //        startActivity(sendIntent);
         String url = "http://api-ratp.pierre-grimaud.fr/v2/bus/80/stations/mairie+du+15+e?destination=mairie+du+18eme";
-        new ApiRequestTask().execute(url);
+        String url2 = "http://api-ratp.pierre-grimaud.fr/v2/bus/80/stations/bucarest?destination=porte+de+versailles";
+        new ApiRequestTask().execute(url,url2);
     }
 
     private String convertInputStreamToString(InputStream inputStream)
@@ -115,24 +106,37 @@ public class MainActivity extends Activity {
         @Override
         protected List<HashMap<String, String>> doInBackground(String... params) {
             String file = downloadUrl(params[0]);
+            String file2 = downloadUrl(params[1]);
+
             JSONObject jsonObject;
             List<HashMap<String, String>> schedulesList = new ArrayList<>();
 
             try {
                 jsonObject = new JSONObject(file);
                 JSONArray schedules = jsonObject.optJSONObject("response").optJSONArray("schedules");
-
                 Schedule schedule;
+
                 for (int i = 0; i < schedules.length(); i++) {
                     JSONObject temp = (JSONObject) schedules.get(i);
-                    String destination = temp.optString("destination");
+                    String destination = "Mairie du XV -> " + temp.optString("destination");
                     String message = temp.optString("message");
 
                     schedule = new Schedule(destination, message);
                     schedulesList.add(schedule.toHashMap());
-
-                    Log.d("test",destination + " : " + message);
                 }
+
+                jsonObject = new JSONObject(file2);
+                schedules = jsonObject.optJSONObject("response").optJSONArray("schedules");
+
+                for (int i = 0; i < schedules.length(); i++) {
+                    JSONObject temp = (JSONObject) schedules.get(i);
+                    String destination = "Bucarest -> " + temp.optString("destination");
+                    String message = temp.optString("message");
+
+                    schedule = new Schedule(destination, message);
+                    schedulesList.add(schedule.toHashMap());
+                }
+
             } catch (JSONException e) {
                 Log.d("Error","JSON Error");
             }
