@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements IHTTPRequestListener {
 
     private ListView demoListView;
     private static final String NAME_KEY = "name";
@@ -70,108 +70,18 @@ public class MainActivity extends Activity {
 
     public void clickHandler(View view)
     {
-//        Intent sendIntent = new Intent();
-//        sendIntent.setAction(Intent.ACTION_SEND);
-//        sendIntent.putExtra(Intent.EXTRA_TEXT, "Text to share");
-//        sendIntent.setType("text/plain");
-//        startActivity(sendIntent);
         String url = "http://api-ratp.pierre-grimaud.fr/v2/bus/80/stations/mairie+du+15+e?destination=mairie+du+18eme";
         String url2 = "http://api-ratp.pierre-grimaud.fr/v2/bus/80/stations/bucarest?destination=porte+de+versailles";
-        new ApiRequestTask().execute(url,url2);
+        new AsyncHttpRequestTask(this).execute(url,url2);
     }
 
-    private String convertInputStreamToString(InputStream inputStream)
-    {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
+    @Override
+    public void onSuccess(JSONObject jsonObject) {
+        Log.d("Success", jsonObject.toString());
     }
 
-    public class ApiRequestTask extends AsyncTask<String, Void, List<HashMap<String, String>>> {
-
-        @Override
-        protected List<HashMap<String, String>> doInBackground(String... params) {
-            String file = downloadUrl(params[0]);
-            String file2 = downloadUrl(params[1]);
-
-            JSONObject jsonObject;
-            List<HashMap<String, String>> schedulesList = new ArrayList<>();
-
-            try {
-                jsonObject = new JSONObject(file);
-                JSONArray schedules = jsonObject.optJSONObject("response").optJSONArray("schedules");
-                Schedule schedule;
-
-                for (int i = 0; i < schedules.length(); i++) {
-                    JSONObject temp = (JSONObject) schedules.get(i);
-                    String destination = "Mairie du XV -> " + temp.optString("destination");
-                    String message = temp.optString("message");
-
-                    schedule = new Schedule(destination, message);
-                    schedulesList.add(schedule.toHashMap());
-                }
-
-                jsonObject = new JSONObject(file2);
-                schedules = jsonObject.optJSONObject("response").optJSONArray("schedules");
-
-                for (int i = 0; i < schedules.length(); i++) {
-                    JSONObject temp = (JSONObject) schedules.get(i);
-                    String destination = "Bucarest -> " + temp.optString("destination");
-                    String message = temp.optString("message");
-
-                    schedule = new Schedule(destination, message);
-                    schedulesList.add(schedule.toHashMap());
-                }
-
-            } catch (JSONException e) {
-                Log.d("Error","JSON Error");
-            }
-            return schedulesList;
-        }
-
-        @Override
-        protected void onPostExecute(List<HashMap<String, String>> scheduleList) {
-            data.clear();
-            data.addAll(scheduleList);
-            simpleAdapter.notifyDataSetChanged();
-        }
-
-        private String downloadUrl(String uri)
-        {
-            String file = "Error";
-            try {
-                URL url = new URL(uri);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setReadTimeout(10000);
-                urlConnection.setConnectTimeout(15000);
-                urlConnection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                urlConnection.setDoInput(true);
-                urlConnection.connect();
-
-                InputStream inputStream = new BufferedInputStream(urlConnection.getInputStream());
-                file = convertInputStreamToString(inputStream);
-            } catch (IOException e) {
-                Log.d("IOError", "Erreur à l'ouverture du fichier");
-            } catch (Exception e) {
-                Log.d("Exception", "Erreure Fatale");
-            }
-            return file;
-        }
+    @Override
+    public void onFailure(JSONObject jsonObject) {
+        Log.d("Error", jsonObject.toString());
     }
-
 }
